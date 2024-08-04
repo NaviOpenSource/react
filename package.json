@@ -1,0 +1,48 @@
+{
+<<<<<<< HEAD
+  "name": "@navi-kit/core",
+  "version": "1.0.0",
+=======
+  "name": "@trebla/lyra",
+  "version": "1.0.3",
+>>>>>>> a41a9e7520bb0e1440e12e36a638356af69e1a5d
+  "description": "A utility library.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint . --ext .ts,.tsx",
+    "prepublishOnly": "yarn build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NaviOpenSource/core.git"
+  },
+  "keywords": [
+    "helpers",
+    "hooks",
+    "enums",
+    "constants",
+    "utility"
+  ],
+  "author": "Trebla Open Source <opensource@trebla.com.br>",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.3",
+    "react": "^17.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/react-hooks": "7.0.0",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^16.0.0",
+    "@types/react": "^17.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.7.0",
+    "react-test-renderer": "17.0.2",
+    "ts-jest": "^29.2.4",
+    "typescript": "^4.0.0"
+  }
+}

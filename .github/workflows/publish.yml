@@ -1,0 +1,87 @@
+name: Publish to npm and create GitHub Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "18"
+
+      - name: Create .npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Run tests
+        run: yarn test
+
+      - name: Build package
+        run: yarn build
+
+      - name: Get the latest tag
+        id: get_latest_tag
+        run: echo ::set-output name=tag::$(git describe --tags `git rev-list --tags --max-count=1`)
+
+      - name: Calculate new version
+        id: new_version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT_VERSION"
+          VERSION_PARTS[2]=$((VERSION_PARTS[2]+1))
+          NEW_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.${VERSION_PARTS[2]}"
+          echo "New version: $NEW_VERSION"
+          echo ::set-output name=version::$NEW_VERSION
+
+      - name: Update version in package.json
+        run: |
+          NEW_VERSION=${{ steps.new_version.outputs.version }}
+          npm version $NEW_VERSION --no-git-tag-version
+
+      - name: Commit and tag new version
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add package.json
+          git commit -m "Bump version to ${{ steps.new_version.outputs.version }}"
+          git tag ${{ steps.new_version.outputs.version }}
+          git push origin main --tags
+
+      - name: Publish to npm
+        run: yarn publish --non-interactive
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.new_version.outputs.version }}
+          release_name: Release ${{ steps.new_version.outputs.version }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/index.js
+          asset_name: index.js
+          asset_content_type: application/javascript
